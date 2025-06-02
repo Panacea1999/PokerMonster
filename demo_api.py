@@ -1,7 +1,8 @@
-import requests
+import sys
 import json
-import numpy as np
 import base64
+import requests
+import numpy as np
 
 
 def encode_image_to_base64(image_binary):
@@ -10,62 +11,77 @@ def encode_image_to_base64(image_binary):
     base64_image = base64.b64encode(image_bytes).decode('utf-8')
     return base64_image
 
-image = open('/opt/tiger/haggsX/PokerMonster/poker_demo_3h5h8h6c2d.png', 'rb').read()
-# image = open('/opt/tiger/haggsX/PokerMonster/poker_demo_7s9s.png', 'rb').read()
-# image = open('/opt/tiger/haggsX/PokerMonster/name_demo_gray.png', 'rb').read()
-b64_frame = encode_image_to_base64(image)
-
-response = requests.post(
-  url="https://openrouter.ai/api/v1/chat/completions",
-  headers={
-    "Authorization": "Bearer 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",
-    "Content-Type": "application/json",
-    "HTTP-Referer": "N/A",
-    "X-Title": "N/A",
-  },
-  data=json.dumps({
-    "model": "google/gemma-3-4b-it:free",
-    "messages": [
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            # 识别文字和数字
-            # "text": "Extract and only answer the formatted ocr in this image"
-            # 识别是否有弃牌
-            # "text": "Does the image contain fold or 弃牌, answer Yes or No"
-            # 识别扑克牌
-            "text": """Is there any playing card in the image? If so, please identify the rank and suit of each card.
-            s means spades, h means heart, d means diamond, c means club.
-            For example, represent the seven of diamonds and the king of spades as '7d' and 'Ks' by answering [7d, Ks]."""
-            # 识别灰名
-            # "text": """Assume you are determining whether the text color is white or gray based on its brightness.  
-# If the brightness is close to pure white (#FFFFFF), answer 'white'.  
-# If it is slightly darker, such as a light gray (#BBBBBB or #AAAAAA), answer 'gray'.  
-# Respond with 'white' or 'gray' only."""
-          },
-          {
-            "type": "image_url",
-            "image_url": {
-            #   "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg"
-              "url": f"data:image/jpg;base64,{b64_frame}"
+def inference_once(image_path, prompt_path):
+  image = open(image_path, 'rb').read()
+  b64_frame = encode_image_to_base64(image)
+  with open(prompt_path, 'r') as f:
+    prompt_txt = f.read()
+    prompt_txt = prompt_txt.encode('utf-8').decode('unicode_escape')
+  response = requests.post(
+    url="https://openrouter.ai/api/v1/chat/completions",
+    headers={
+      "Authorization": f"Bearer {AK}",
+      "Content-Type": "application/json",
+    },
+    data=json.dumps({
+      "model": "google/gemma-3-4b-it:free",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": prompt_txt
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": f"data:image/jpg;base64,{b64_frame}"
+              }
             }
-          }
-        ]
-      }
-    ],
-    "temperature": 1,
-    "top_p": 1,
-  })
-)
+          ]
+        }
+      ],
+      "temperature": 0.1,
+    })
+  )
 
-import sys
-print(response.json())
-if response.status_code == 200:
-    try:
-        response_data = response.json()
-        prediction = response_data["choices"][0]["message"]["content"].strip()
-        print(prediction)
-    except Exception as e:
-        sys.stderr.write(f"{e}")
+  if response.status_code == 200:
+      try:
+          response_data = response.json()
+          prediction = response_data["choices"][0]["message"]["content"].strip()
+          return(prediction)
+      except Exception as e:
+          return f"Inf failed due to {e}"
+  else:
+    return f"Inf failed due to {response.json()}"
+  
+
+AK = "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"
+
+# Demo cases
+
+# [3h, 5h, 8h, 6c, 2d]
+image_path = './PokerMonster/poker_demo_3h5h8h6c2d.png'
+prompt_path = './PokerMonster/prompt/parse_cards.txt'
+print(inference_once(image_path, prompt_path))
+
+# [7s, 9s]
+image_path = './PokerMonster/poker_demo_7s9s.png'
+prompt_path = './PokerMonster/prompt/parse_cards.txt'
+print(inference_once(image_path, prompt_path))
+
+# dark_blue
+image_path = './PokerMonster/fold_chips.png'
+prompt_path = './PokerMonster/prompt/rec_dark_blue.txt'
+print(inference_once(image_path, prompt_path))
+
+# blue
+image_path = './PokerMonster/active_chips.png'
+prompt_path = './PokerMonster/prompt/rec_dark_blue.txt'
+print(inference_once(image_path, prompt_path))
+
+# 40
+image_path = './PokerMonster/ocr_demo_40chips.png'
+prompt_path = './PokerMonster/prompt/ocr.txt'
+print(inference_once(image_path, prompt_path))

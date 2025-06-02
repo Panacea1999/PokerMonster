@@ -1,0 +1,3 @@
+Is there any playing card in the image? If so, please identify the rank and suit of each card.
+s means spades, h means heart, d means diamond, c means club.
+For example, represent the seven of diamonds and the king of spades as '7d' and 'Ks' by answering [7d, Ks].

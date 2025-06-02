@@ -1,0 +1,4 @@
+Assume you are determining whether the text color is white or gray based on its brightness.  
+If the brightness is close to pure white (#FFFFFF), answer 'white'.  
+If it is slightly darker, such as a light gray (#BBBBBB or #AAAAAA), answer 'gray'.  
+Respond with 'white' or 'gray' only.

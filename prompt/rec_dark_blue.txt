@@ -1,0 +1,7 @@
+The image contains a number in blue font. You need to determine whether it is 'blue' or 'dark_blue' based on the brightness of the color.
+
+Use the following rules:
+- If the text color is a bright, saturated blue similar to #73C6FF (RGB around 115, 198, 255), classify it as 'blue'.
+- If the text color is a deeper or duller blue, such as #4A90C4 or RGB below (90, 160, 200), classify it as 'dark_blue'.
+
+Only respond with 'blue' or 'dark_blue'.
